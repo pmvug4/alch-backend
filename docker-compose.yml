@@ -1,0 +1,82 @@
+version: "3.4"
+
+services:
+    postgres:
+        restart: always
+        image: postgres/postgres:14-3.3
+        container_name: ${POSTGRES_HOST}
+        command: -p ${POSTGRES_PORT}
+        ports:
+            - "127.0.0.1:8503:${POSTGRES_PORT}"
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        volumes:
+            - ./postgres_data:/var/lib/postgresql/data
+        networks:
+            - default
+
+    service:
+        restart: always
+        build:
+            context: .
+            target: python
+        container_name: ${SERVICE_NAME}
+        command: bash -c "gunicorn main:app -w 4 -k uvicorn.workers.UvicornH11Worker  -b 0.0.0.0:${SERVICE_PORT}"
+        env_file:
+            - .env
+        volumes:
+            - /containers/${SERVICE_NAME}/logs:/app/logs
+            - ./static:/static
+            - ./gcert_courier.json:/gcert_courier.json
+            - ./gcert_customer.json:/gcert_customer.json
+            - ./gcs_key.json:/gcs_key.json
+        links:
+            - postgres
+            - migration
+        depends_on:
+            - postgres
+            - migration
+        ports:
+            - "127.0.0.1:${SERVICE_PORT}:${SERVICE_PORT}"
+        networks:
+            - default
+
+    pgweb:
+        image: sosedoff/pgweb
+        container_name: pgweb
+        links:
+            - postgres:postgres
+        environment:
+            - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+        depends_on:
+            - postgres
+        ports:
+            - "127.0.0.1:${PGWEB_SERVICE_PORT}:8081"
+        networks:
+            - default
+
+    migration:
+        build:
+            context: .
+            target: migration
+        links:
+            - postgres
+        depends_on:
+            - postgres
+        env_file:
+            - .env
+        networks:
+            - default
+
+    cache:
+        image: redis:6.2.7-alpine
+        restart: always
+        command: redis-server  --loglevel warning --requirepass ${REDIS_PASSWORD}
+
+
+networks:
+    default:
+        external:
+            name: services

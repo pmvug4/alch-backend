@@ -1,8 +1,4 @@
-from typing import Optional
-
 from pydantic import BaseSettings, Field
-
-from core.config.common import common_settings
 
 
 class TelegramSettings(BaseSettings):

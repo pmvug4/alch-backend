@@ -7,7 +7,7 @@ from databases import Database
 from loguru import logger
 
 from core.common.singleton import SingletonMeta
-from core.config.db_settings import db_settings, demo_db_settings, PLDBSettings
+from core.config.db import db_settings, demo_db_settings, DBSettings
 from core.config.telegram import telegram_settings
 from core.telegram_notification.models import TelegramErrorMessage
 from core.telegram_notification.task import send_telegram_message
@@ -111,7 +111,7 @@ db_class = DatabaseWithLogging
 
 class _DBConnPool:
     # ABC. Implementation must set meta=Singleton
-    _db_settings: PLDBSettings = NotImplemented
+    _db_settings: DBSettings = NotImplemented
     db_conn = None
 
     async def init_db(self):

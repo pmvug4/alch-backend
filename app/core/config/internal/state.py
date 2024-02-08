@@ -35,3 +35,6 @@ class RunStateSettings(BaseSettings):
         env='SENT_EMAILS_IN_TELEGRAM',
         description="Показывает, активен ли SMTP мок"
     )
+
+
+run_state_settings = RunStateSettings()

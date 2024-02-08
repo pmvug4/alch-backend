@@ -7,3 +7,6 @@ class GoogleSettings(BaseSettings):
         env='GOOGLE_APPLICATION_CREDENTIALS',
         description="Path to google credentials file"
     )
+
+
+google_settings = GoogleSettings()

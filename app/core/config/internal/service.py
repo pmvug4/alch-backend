@@ -7,6 +7,7 @@ class ServiceSettings(BaseSettings):
     API_KEY: str = Field(..., env='SERVICE_API_KEY')
     TESTING_KEY: Optional[str] = Field(None, env='SERVICE_TESTING_KEY')
     SHOW_API_DOCS: bool = Field(True, env='SERVICE_SHOW_API_DOCS')
+    RETURN_FULL_VALIDATION_ERRORS: bool = Field(True, env='RETURN_FULL_VALIDATION_ERRORS')
 
 
 service_settings = ServiceSettings()

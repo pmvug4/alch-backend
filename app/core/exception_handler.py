@@ -8,10 +8,10 @@ from starlette.responses import JSONResponse
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSABLE_ENTITY
 
 from core.common import strings
-from core.config.common import common_settings
+from core.config.internal import service_settings
 from core.exception import AppHTTPException
 
-from core.otp_provider import send_internal_exception_alarm
+from core.telegram import tg_send_alarm
 
 from loguru import logger
 
@@ -27,20 +27,19 @@ async def http422_error_handler(
         content={
             "error": {
                 "error_msg": strings.validation_error,
-                "error_name": "parsedataerror",
+                "error_name": "parse_data_error",
                 "error_payload":
                     {
-                        "validation_errors": exc.errors() if common_settings.HTTP_EXTRA_INFO else ""
+                        "validation_errors": exc.errors() if service_settings.RETURN_FULL_VALIDATION_ERRORS else ""
                     }
             },
-
             "data": None
         },
         status_code=HTTP_422_UNPROCESSABLE_ENTITY,
     )
 
 
-async def http_error_handler(request: Request, exc: AppHTTPException) -> JSONResponse:
+async def http_handled_error_handler(request: Request, exc: AppHTTPException) -> JSONResponse:
     exception_info = f"Response: [{request.method}] -> {request.url} "
     logger.info(f"{exception_info} Exception: {repr(exc)}")
     logger.debug(f"{request.headers}")
@@ -57,28 +56,29 @@ async def http_error_handler(request: Request, exc: AppHTTPException) -> JSONRes
         status_code=exc.status_code)
 
 
-async def http_unhadlederror_handler(_: Request, exc: HTTPException) -> JSONResponse:
+async def http_unhandled_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
     logger.exception(exc)
     return JSONResponse(
         content={
             "error": {
                 "error_msg": strings.unhandled_exception_text,
-                "error_name": "unhandlederror",
+                "error_name": "unhandled_error",
                 "error_payload": {},
             },
             "data": None
         },
-        status_code=exc.status_code)
+        status_code=exc.status_code
+    )
 
 
-async def error_exception_handler(request: Request, exc: Exception):
+async def http_internal_error_handler(request: Request, exc: Exception):
     exception_info = f"Response: [{request.method}] -> {request.url} >>> {request.headers} <<<"
     logger.exception(f"{exception_info} Exception: {repr(exc)}")
     request_id = ""
     if hasattr(exc, "_request-id-for-response"):
         request_id = exc.__getattribute__("_request-id-for-response")
 
-    await send_internal_exception_alarm(request, exc, request_id)
+    await tg_send_alarm(f"({request_id}) Internal error recorded: {repr(exc)}")
 
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,

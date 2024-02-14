@@ -7,8 +7,8 @@ from core.smtp.exceptions import UnexpectedSmtpExtension
 
 from loguru import logger
 
-from core.telegram_notification.models import TelegramErrorMessage
-from core.telegram_notification.task import send_telegram_message
+from core.telegram.models import TelegramErrorMessage
+from core.telegram.task import send_telegram_message
 
 
 async def create_message(title: str, text: str, receiver_email: str) -> str:

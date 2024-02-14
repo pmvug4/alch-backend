@@ -1,28 +1,50 @@
 import aioredis
-
-from core.config.redis import redis_settings
 from loguru import logger
-redis = None
+from typing import Optional
+
+from core.common.singleton import SingletonMeta
+
+from core.config.external import redis_settings
 
 
-async def init_redis_conn():
-    global redis
-    if not redis_settings.HOST:
-        logger.info("Caching is disabled all data will be load from db")
-    else:
-        logger.info("Try to connect redis....")
-    redis = await aioredis.from_url(
-        url=f"redis://{redis_settings.HOST}:{redis_settings.PORT}",
-        password=redis_settings.PASSWORD.get_secret_value()
-    )
-    try:
-        await redis.ping()
-    except Exception as e:
-        logger.error(f"Exception while test connection to redis: {repr(e)}")
-    else:
-        logger.info(f"Redis is availiable")
+class Redis(metaclass=SingletonMeta):
+    _redis_settings = redis_settings
+    _redis: Optional[aioredis.Redis] = None
+
+    async def init_redis(self):
+        try:
+            logger.info("Try to connect to the redis...")
+
+            self._redis = await aioredis.from_url(
+                url=f"redis://{redis_settings.HOST}:{redis_settings.PORT}",
+                password=redis_settings.PASSWORD.get_secret_value()
+            )
+
+            await self._redis.ping()
+        except aioredis.RedisError:
+            logger.error("Failed to establish a redis connection.")
+            raise
+        else:
+            logger.info("Redis was connected successfully.")
+
+    async def shutdown_redis(self):
+        if self._redis is None:
+            logger.debug("No redis connection for shutdown.")
+        else:
+            try:
+                logger.info("Try to gracefully redis shutdown.")
+                await self._redis.close()
+            except aioredis.RedisError:
+                logger.error("Failed to redis shutdown.")
+            finally:
+                self._redis = None
+
+    def get_connection(self) -> aioredis.Redis:
+        if self._redis is None:
+            raise RuntimeError("Redis is not configured.")
+
+        yield self._redis
 
 
-async def close_redis_conn():
-    if redis:
-        await redis.close()
+def get_redis() -> aioredis.Redis:
+    yield Redis().get_connection()

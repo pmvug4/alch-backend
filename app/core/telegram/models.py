@@ -1,4 +1,4 @@
-from core.config.telegram import telegram_settings
+from core.config.external.telegram import telegram_settings
 from core.context import request_id_context
 
 
@@ -7,10 +7,10 @@ class TelegramMessage:
         self.msg = msg
 
     def format(self):
-        return f"{telegram_settings.PREFIX}: {self.msg}"
+        return f"{telegram_settings.GLOBAL_PREFIX}{self.msg}"
 
 
 class TelegramErrorMessage(TelegramMessage):
     def format(self):
         request_id = request_id_context.get()
-        return f"{telegram_settings.PREFIX}: ({request_id}) {self.msg}"
+        return f"{telegram_settings.GLOBAL_PREFIX}({request_id}) {self.msg}"

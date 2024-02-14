@@ -23,8 +23,8 @@ from core.orders.models import Order, OrderCourierView, RoutePoint, Route
 from core.orders.store.route_points import get_route_point
 from core.otp_provider import send_otp_msg
 from core.push.services import send_pushes, PushMessage
-from core.telegram_notification.models import TelegramMessage
-from core.telegram_notification.task import send_telegram_message
+from core.telegram.models import TelegramMessage
+from core.telegram.task import send_telegram_message
 from core.verification_request.models import VerificationRequest
 
 

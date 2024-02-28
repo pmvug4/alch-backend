@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from core.common.security import get_current_user, GetCurrentDB
 from core.cooperators.exceptions import CooperatorDoesNotExist
-from core.exception import AccessForbiden, IncorrectCredentials
+from core.exception import AccessForbidden, IncorrectCredentials
 from core.faq.models import FaqList, Role
 from core.faq.services import assert_role_faq
 from core.schemas import get_response_models, prepare_response_scheme
@@ -14,7 +14,7 @@ from ..account.model import PlatformType
 router = APIRouter(tags=["faq"])
 _base_exc = [
     IncorrectCredentials,
-    AccessForbiden,
+    AccessForbidden,
     CooperatorDoesNotExist
 ]
 

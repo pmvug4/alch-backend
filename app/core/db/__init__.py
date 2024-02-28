@@ -104,5 +104,5 @@ class DBConnPool(metaclass=SingletonMeta):
             raise
 
 
-async def get_db():
+async def get_db() -> Connection:
     yield DBConnPool().get_conn()

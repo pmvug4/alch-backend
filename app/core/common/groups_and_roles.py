@@ -1,38 +1,26 @@
 from enum import Enum
 
-ROLE_ADMIN = 'admin'
-ROLE_MANAGER = 'manager'
-
 
 class BaseUserGroups(str, Enum):
     pass
 
 
 class UserPublicGroups(BaseUserGroups):
-    customer = 'customer'
-    courier = 'courier'
+    player = 'player'
 
 
-GROUP_CUSTOMER = 1
-GROUP_COURIER = 5
-
-cooperator = 'cooperator'
-GROUP_COOPERATOR = 100
+GROUP_PLAYER = 1
+GROUP_ADMIN = 5
 
 
 class UserAllGroups(BaseUserGroups):
-    customer = UserPublicGroups.customer.value
-    courier = UserPublicGroups.courier.value
-    cooperator = cooperator
+    player = UserPublicGroups.player.value
+    admin = 'admin'
 
 
 all_group_map = {
-    UserPublicGroups.customer: GROUP_CUSTOMER,
-    UserPublicGroups.customer.value: GROUP_CUSTOMER,
-
-    UserPublicGroups.courier: GROUP_COURIER,
-    UserPublicGroups.courier.value: GROUP_COURIER,
-
-    UserAllGroups.cooperator: GROUP_COOPERATOR,
-    UserAllGroups.cooperator.value: GROUP_COOPERATOR
+    UserAllGroups.player: GROUP_PLAYER,
+    UserAllGroups.player.value: GROUP_PLAYER,
+    UserAllGroups.admin: GROUP_ADMIN,
+    UserAllGroups.admin.value: GROUP_ADMIN
 }

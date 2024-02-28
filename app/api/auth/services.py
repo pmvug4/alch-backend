@@ -22,7 +22,7 @@ from core.customers.models.companies import CompanyType
 from core.customers.store.employees import get_employee_fully
 from core.db import tools as db_tools
 from core.db.tables import DBTables
-from core.exception import AccessForbiden
+from core.exception import AccessForbidden
 from core.exception import IncorrectCredentials
 from core.otp_provider import send_otp_auth_password, _check_verification_code
 from core.twilio.models import SendMethod
@@ -136,7 +136,7 @@ async def send_otp_password(
             if assert_customer_company and user.group_id == all_group_map[UserAllGroups.customer]:
                 employee = await get_employee_fully(db, user_id=user.user_id, return_none=True)
                 if employee and employee.company.type != assert_customer_company:
-                    raise AccessForbiden
+                    raise AccessForbidden
 
             if not otp_possible(user):
                 raise OTPAuthForbidden

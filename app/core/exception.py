@@ -54,7 +54,7 @@ class AccessTokenExpired(AppHTTPException):
     err_msg = strings.auth_token_expired
 
 
-class AccessForbiden(AppHTTPException):
+class AccessForbidden(AppHTTPException):
     # доступ к данным запрещен
     error_name = "access_forbidden"
     http_code = 403

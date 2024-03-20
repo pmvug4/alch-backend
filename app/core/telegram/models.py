@@ -1,5 +1,5 @@
 from core.config.external.telegram import telegram_settings
-from core.context import request_id_context
+from core.app_request import AppRequest
 
 
 class TelegramMessage:
@@ -12,5 +12,4 @@ class TelegramMessage:
 
 class TelegramErrorMessage(TelegramMessage):
     def format(self):
-        request_id = request_id_context.get()
-        return f"{telegram_settings.GLOBAL_PREFIX}({request_id}) {self.msg}"
+        return f"{telegram_settings.GLOBAL_PREFIX}({AppRequest.id}) {self.msg}"

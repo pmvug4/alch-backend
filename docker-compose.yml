@@ -3,7 +3,7 @@ version: "3.4"
 services:
     postgres:
         restart: always
-        image: postgres/postgres:14-3.3
+        image: postgres:16.2
         container_name: ${POSTGRES_HOST}
         command: -p ${POSTGRES_PORT}
         ports:
@@ -32,9 +32,11 @@ services:
         links:
             - postgres
             - migration
+            - cache
         depends_on:
             - postgres
             - migration
+            - cache
         ports:
             - "127.0.0.1:${SERVICE_PORT}:${SERVICE_PORT}"
         networks:
@@ -42,7 +44,7 @@ services:
 
     pgweb:
         image: sosedoff/pgweb
-        container_name: pgweb
+        container_name: alch_pgweb
         links:
             - postgres:postgres
         environment:

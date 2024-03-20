@@ -16,9 +16,8 @@ from core.telegram.task import send_telegram_message
 class DatabaseWithLogging(Database):
     @staticmethod
     def _process_exec_threshold(func_name: str):
-        def _outer():
+        def _outer(func):
             async def wrap(
-                    func,
                     *args,
                     **kwargs
             ):
@@ -70,7 +69,7 @@ class DBConnPool(metaclass=SingletonMeta):
             logger.info(f"[{self.__class__.__name__}] (init_db) init db {self._db_settings.DB}...")
 
             self.db_conn = DatabaseWithLogging(
-                url=self._db_settings.DATABASE_URL,
+                url=self._db_settings.database_url,
                 min_size=self._db_settings.MIN_CONNECTIONS,
                 max_size=self._db_settings.MAX_CONNECTIONS,
                 server_settings={'jit': 'off'},

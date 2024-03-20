@@ -12,7 +12,7 @@ from core.exception import AppHTTPException
 from core.exception_handler import (
     http_internal_error_handler,
     http422_error_handler,
-    http_unhandled_error_handler,
+    http_another_error_handler,
     http_handled_error_handler
 )
 from core.logs import configure_logging
@@ -43,8 +43,6 @@ app.add_event_handler(
     create_stop_app_handler(),
 )
 
-# todo остановился тут
-
 app.include_router(api_router)
 
 
@@ -52,14 +50,10 @@ app.add_exception_handler(RequestValidationError, http422_error_handler)
 app.add_exception_handler(AppHTTPException, http_handled_error_handler)
 
 # обработка не штатных ошибок
-app.add_exception_handler(StarletteHTTPException, http_unhandled_error_handler)
+app.add_exception_handler(StarletteHTTPException, http_another_error_handler)
 app.add_exception_handler(Exception, http_internal_error_handler)
 
 app.add_middleware(BaseHTTPMiddleware, dispatch=request_middleware)
-
-
-# if not gcs_settings.USE_GCS:
-#     app.mount("/static", StaticFiles(directory="/static"), name="static")
 
 
 if not service_settings.SHOW_API_DOCS:

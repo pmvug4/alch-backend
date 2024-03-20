@@ -3,71 +3,85 @@ from typing import Optional, Dict, Any
 from fastapi import HTTPException
 from pydantic import create_model
 
-from core.common import strings
+from core import localization
 
 
 class AppHTTPException(HTTPException):
+    status_code = 400
     error_name = "base_error"
-    http_code = 400
-    err_msg = "Error occurred"
-    model = None
+
+    _model = None
+
+    @classmethod
+    def get_model(cls):
+        if not cls._model:
+            cls._model = create_model(
+                cls.__name__,
+                error_name=cls.error_name,
+                error_payload=(dict, dict())
+            )
+
+        return cls._model
 
     def __init__(
             self,
             status_code: int = None,
-            detail: Any = None,
-            headers: Optional[Dict[str, Any]] = None,
-            error_payload: Optional[Dict[str, Any]] = None,
+            lang: localization.Language | str = None,
+            msg_format: dict = None,
+            msg_override: str = None,
+            extra_headers: Dict[str, Any] = None,
+            error_payload: Dict[str, Any] = None
     ) -> None:
-        _status_code = status_code or self.http_code
-        _msg = detail or self.err_msg
-        super().__init__(status_code=_status_code, detail=_msg, headers=headers)
-        self.headers = headers
-        self.error_payload = error_payload or dict()
+        super().__init__(
+            status_code=status_code or self.status_code,
+            detail='',
+            headers=extra_headers
+        )
 
-    @classmethod
-    def get_model(cls):
-        if not cls.model:
-            cls.model = create_model(cls.__name__,
-                                     error_msg=cls.err_msg,
-                                     error_name=cls.error_name,
-                                     error_payload=(dict, dict()))
-        return cls.model
+        self.status_code: int = self.status_code
+        self.error_name: str = type(self).error_name
+
+        self.lang: localization.Language | str = lang or localization.lang_contextvar.get()
+        self.extra_headers: dict = extra_headers or {}
+        self.error_payload: dict = error_payload or {}
+        self.msg_format: Optional[dict] = msg_format
+        self.msg_override: Optional[str] = msg_override
+
+    @property
+    def user_message(self) -> str:
+        if self.msg_override:
+            return self.msg_override
+        else:
+            return localization.get_text(
+                f'error__{self.error_name}',
+                lang=self.lang,
+                default='Error was happened.'
+            ).format(
+                **self.msg_format
+            )
 
 
 class IncorrectCredentials(AppHTTPException):
     # общая ошибка авторизации, нет пользователя или пароль неверный ошибка декодирования jwt и т.п.
     error_name = "incorrect_credentials"
-    http_code = 401
-    err_msg = strings.auth_error
-
-
-class AppZoneIsExpired(AppHTTPException):
-    error_name = 'app_zone_is_expired'
-    http_code = 401
-    err_msg = strings.app_zone_is_expired
+    status_code = 401
 
 
 class AccessTokenExpired(AppHTTPException):
     error_name = "access_token_expired"
-    http_code = 401
-    err_msg = strings.auth_token_expired
+    status_code = 401
 
 
 class AccessForbidden(AppHTTPException):
-    # доступ к данным запрещен
     error_name = "access_forbidden"
-    http_code = 403
-    err_msg = strings.access_forbidden
+    status_code = 403
 
 
 class NotDevelopedError(AppHTTPException):
     error_name = 'not_developed_error'
-    http_code = 418
-    err_msg = strings.not_developed_error
+    status_code = 418
 
 
 class RaceConditionError(AppHTTPException):
-    http_code = 400
+    status_code = 400
     error_name = 'race_condition_error'
-    err_msg = strings.race_condition_error

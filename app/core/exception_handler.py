@@ -2,18 +2,58 @@ from typing import Union
 
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSABLE_ENTITY
 
-from core.common import strings
 from core.config.internal import service_settings
 from core.exception import AppHTTPException
 
 from core.telegram import tg_send_alarm
 
 from loguru import logger
+
+
+class _ErrorModel(BaseModel):
+    name: str
+    user_message: str
+    payload: dict
+
+    @classmethod
+    def build_from_app_http_exception(cls, e: AppHTTPException) -> '_ErrorModel':
+        return cls(
+            name=e.error_name,
+            user_message=e.user_message,
+            payload=e.error_payload
+
+        )
+
+    @classmethod
+    def build_from_422(cls, e: RequestValidationError | ValidationError) -> '_ErrorModel':
+        return cls(
+            name='parse_data_error',
+            user_message='Request validation error',
+            payload={
+                'validation_errors': e.errors() if service_settings.RETURN_FULL_VALIDATION_ERRORS else None
+            }
+        )
+
+    @classmethod
+    def build_another_http_error(cls) -> '_ErrorModel':
+        return cls(
+            name='another_http_error',
+            user_message='Another http error',
+            payload={}
+        )
+
+    @classmethod
+    def build_internal_error(cls) -> '_ErrorModel':
+        return cls(
+            name='internal_server_error',
+            user_message='Internal server error',
+            payload={}
+        )
 
 
 async def http422_error_handler(
@@ -25,14 +65,7 @@ async def http422_error_handler(
 
     return JSONResponse(
         content={
-            "error": {
-                "error_msg": strings.validation_error,
-                "error_name": "parse_data_error",
-                "error_payload":
-                    {
-                        "validation_errors": exc.errors() if service_settings.RETURN_FULL_VALIDATION_ERRORS else ""
-                    }
-            },
+            "error": _ErrorModel.build_from_422(exc).dict(),
             "data": None
         },
         status_code=HTTP_422_UNPROCESSABLE_ENTITY,
@@ -42,29 +75,21 @@ async def http422_error_handler(
 async def http_handled_error_handler(request: Request, exc: AppHTTPException) -> JSONResponse:
     exception_info = f"Response: [{request.method}] -> {request.url} "
     logger.info(f"{exception_info} Exception: {repr(exc)}")
-    logger.debug(f"{request.headers}")
 
     return JSONResponse(
         content={
-            "error": {
-                "error_msg": exc.detail,
-                "error_name": exc.error_name,
-                "error_payload": exc.error_payload
-            },
+            "error": _ErrorModel.build_from_app_http_exception(exc).dict(),
             "data": None
         },
-        status_code=exc.status_code)
+        status_code=exc.status_code
+    )
 
 
-async def http_unhandled_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
+async def http_another_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
     logger.exception(exc)
     return JSONResponse(
         content={
-            "error": {
-                "error_msg": strings.unhandled_exception_text,
-                "error_name": "unhandled_error",
-                "error_payload": {},
-            },
+            "error": _ErrorModel.build_another_http_error().dict(),
             "data": None
         },
         status_code=exc.status_code
@@ -83,11 +108,7 @@ async def http_internal_error_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
         content={
-            "error": {
-                "error_msg": strings.unhandled_exception_text,
-                "error_name": "",
-                "error_payload": {}
-            },
+            "error": _ErrorModel.build_internal_error().dict(),
             "request_id": request_id,
             "data": None
         }

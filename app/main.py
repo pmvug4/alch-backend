@@ -8,21 +8,19 @@ from core.config.internal import service_settings
 
 from core.common.middleware import request_middleware
 from core.events import create_start_app_handler, create_stop_app_handler
-from core.exception import AppHTTPException
-from core.exception_handler import (
+from core.exceptions.exception import AppHTTPException
+from core.exceptions.exception_handler import (
     http_internal_error_handler,
     http422_error_handler,
     http_another_error_handler,
     http_handled_error_handler
 )
-from core.logs import configure_logging
-from core.logs.dependencies import log_json
+from core.logs.dependencies import log_request
 
 from api.routes import router as api_router
 
 
-app = FastAPI(dependencies=[Depends(log_json)])
-configure_logging()
+app = FastAPI(dependencies=[Depends(log_request)])
 
 
 app.add_middleware(
@@ -44,7 +42,6 @@ app.add_event_handler(
 )
 
 app.include_router(api_router)
-
 
 app.add_exception_handler(RequestValidationError, http422_error_handler)
 app.add_exception_handler(AppHTTPException, http_handled_error_handler)

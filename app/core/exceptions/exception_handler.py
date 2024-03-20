@@ -8,11 +8,10 @@ from starlette.responses import JSONResponse
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSABLE_ENTITY
 
 from core.config.internal import service_settings
-from core.exception import AppHTTPException
-
 from core.telegram import tg_send_alarm
+from core.logs import log
 
-from loguru import logger
+from .exception import AppHTTPException
 
 
 class _ErrorModel(BaseModel):
@@ -61,7 +60,7 @@ async def http422_error_handler(
         exc: Union[RequestValidationError, ValidationError],
 ) -> JSONResponse:
     exception_info = f"Response: [{request.method}] -> {request.url} >>> {request.headers} <<<"
-    logger.exception(f"{exception_info}\nException: {repr(exc)}\n Body: {exc.body}")
+    log.exception(f"{exception_info}\nException: {repr(exc)}\n Body: {exc.body}")
 
     return JSONResponse(
         content={
@@ -74,7 +73,7 @@ async def http422_error_handler(
 
 async def http_handled_error_handler(request: Request, exc: AppHTTPException) -> JSONResponse:
     exception_info = f"Response: [{request.method}] -> {request.url} "
-    logger.info(f"{exception_info} Exception: {repr(exc)}")
+    log.info(f"{exception_info} Exception: {repr(exc)}")
 
     return JSONResponse(
         content={
@@ -86,7 +85,7 @@ async def http_handled_error_handler(request: Request, exc: AppHTTPException) ->
 
 
 async def http_another_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
-    logger.exception(exc)
+    log.exception(exc)
     return JSONResponse(
         content={
             "error": _ErrorModel.build_another_http_error().dict(),
@@ -98,7 +97,7 @@ async def http_another_error_handler(_: Request, exc: HTTPException) -> JSONResp
 
 async def http_internal_error_handler(request: Request, exc: Exception):
     exception_info = f"Response: [{request.method}] -> {request.url} >>> {request.headers} <<<"
-    logger.exception(f"{exception_info} Exception: {repr(exc)}")
+    log.exception(f"{exception_info} Exception: {repr(exc)}")
     request_id = ""
     if hasattr(exc, "_request-id-for-response"):
         request_id = exc.__getattribute__("_request-id-for-response")

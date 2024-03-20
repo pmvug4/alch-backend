@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from pydantic import create_model
 
 from core import localization
+from core.app_request import AppRequest
 
 
 class AppHTTPException(HTTPException):
@@ -41,7 +42,7 @@ class AppHTTPException(HTTPException):
         self.status_code: int = self.status_code
         self.error_name: str = type(self).error_name
 
-        self.lang: localization.Language | str = lang or localization.lang_contextvar.get()
+        self.lang: localization.Language | str = lang or AppRequest.lang.get()
         self.extra_headers: dict = extra_headers or {}
         self.error_payload: dict = error_payload or {}
         self.msg_format: Optional[dict] = msg_format

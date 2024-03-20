@@ -10,4 +10,5 @@ class ServiceSettings(BaseSettings):
     RETURN_FULL_VALIDATION_ERRORS: bool = Field(True, env='SERVICE_RETURN_FULL_VALIDATION_ERRORS')
     RETURN_PROCESS_TIME: bool = Field(True, env='SERVICE_RETURN_PROCESS_TIME')
 
+
 service_settings = ServiceSettings()

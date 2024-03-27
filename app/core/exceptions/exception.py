@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from pydantic import create_model
 
 from core import localization
+from core.localization.data import error_add_localization
 from core.app_request import AppRequest
 
 
@@ -67,15 +68,42 @@ class IncorrectCredentials(AppHTTPException):
     error_name = "incorrect_credentials"
     status_code = 401
 
+    def __new__(cls, *args, **kwargs):
+        super().__new__(*args, **kwargs)
+
+        error_add_localization(
+            cls.error_name,
+            ru="Произошла ошибка авторизации, пожалуйста перезайдите в приложение.",
+            en="Authorization error was happened, please re-login into the app."
+        )
+
 
 class AccessTokenExpired(AppHTTPException):
     error_name = "access_token_expired"
     status_code = 401
 
+    def __new__(cls, *args, **kwargs):
+        super().__new__(*args, **kwargs)
+
+        error_add_localization(
+            cls.error_name,
+            ru="Произошла ошибка авторизации, пожалуйста перезайдите в приложение.",
+            en="Authorization error was happened, please re-login into the app."
+        )
+
 
 class AccessForbidden(AppHTTPException):
     error_name = "access_forbidden"
     status_code = 403
+
+    def __new__(cls, *args, **kwargs):
+        super().__new__(*args, **kwargs)
+
+        error_add_localization(
+            cls.error_name,
+            ru="Доступ к данному ресурсу запрещен.",
+            en="Access forbidden."
+        )
 
 
 class NotDevelopedError(AppHTTPException):

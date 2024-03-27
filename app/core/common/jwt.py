@@ -2,31 +2,31 @@ from datetime import datetime, timedelta
 
 import jwt
 
-from api.users.model import User
 from core.config.internal import auth_settings
+from core.exceptions.exception import AccessTokenExpired, IncorrectCredentials
 
 
 def decode_token(token: str) -> dict:
-    return jwt.decode(
-        token,
-        auth_settings.AUTH_SECRET,
-        algorithms=[auth_settings.AUTH_ALG]
-    )
+    try:
+        return jwt.decode(
+            token,
+            auth_settings.AUTH_SECRET,
+            algorithms=[auth_settings.AUTH_ALG]
+        )
+    except jwt.ExpiredSignatureError:
+        raise AccessTokenExpired
+    except jwt.DecodeError:
+        raise IncorrectCredentials
 
 
-def create_access_token(
-        user: User,
+def create_token(
+        data: dict,
         expires_in: int = auth_settings.AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS
 ) -> str:
     expire = datetime.utcnow() + timedelta(seconds=expires_in)
-    data = {
-        'user': user.user_id,
-        'user_uuid': str(user.uuid),
-        'exp': expire
-    }
 
     encoded_jwt = jwt.encode(
-        data,
+        data | {'exp': expire},
         auth_settings.AUTH_SECRET,
         algorithm=auth_settings.AUTH_ALG
     )

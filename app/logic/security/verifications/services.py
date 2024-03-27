@@ -17,6 +17,7 @@ from .errors import (
     IncorrectVerificationCode,
     VerificationNotYetVerified
 )
+from .telegram import send_email_code
 
 
 class EmailVerificationService:
@@ -38,10 +39,17 @@ class EmailVerificationService:
             ):
                 raise EmailVerificationRecheckIntervalNotPass
 
+            code = str(random.randint(1, 10**_size - 1)).zfill(_size)
+
+            await send_email_code(
+                email=email,
+                code=code
+            )
+
             return await store.create(
                 EmailVerificationForm(
                     email=email,
-                    code=str(random.randint(1, 10**_size - 1)).zfill(_size),
+                    code=code,
                     attempts_left=_attempts,
                     valid_until=datetime.datetime.now() + datetime.timedelta(seconds=_valid_interval)
                 )

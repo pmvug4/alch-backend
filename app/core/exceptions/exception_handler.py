@@ -9,6 +9,7 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSA
 
 from core.telegram import tg_send_alarm
 from core.logs import log
+from core.app_request import AppRequest
 
 from .exception import AppHTTPException
 from .schemas import ErrorModel
@@ -57,17 +58,14 @@ async def http_another_error_handler(_: Request, exc: HTTPException) -> JSONResp
 async def http_internal_error_handler(request: Request, exc: Exception):
     exception_info = f"Response: [{request.method}] -> {request.url} >>> {request.headers} <<<"
     log.exception(f"{exception_info} Exception: {repr(exc)}")
-    request_id = ""
-    if hasattr(exc, "_request-id-for-response"):
-        request_id = exc.__getattribute__("_request-id-for-response")
 
-    await tg_send_alarm(f"({request_id}) Internal error recorded: {repr(exc)}")
+    await tg_send_alarm(f"({AppRequest.id}) Internal error recorded: {repr(exc)}")
 
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "error": ErrorModel.build_internal_error().dict(),
-            "request_id": request_id,
+            "request_id": AppRequest.id,
             "data": None
         }
     )

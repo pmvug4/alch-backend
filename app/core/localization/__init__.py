@@ -28,4 +28,4 @@ def get_text(
     if isinstance(lang, str):
         lang = lang_map.get(lang, 'en')
 
-    return src.get(lang.value, src['en']).get(key, src['en'][key], default=default)
+    return src.get(lang.value, src['en']).get(key, src['en'].get(key, default))

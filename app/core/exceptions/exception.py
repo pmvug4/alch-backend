@@ -46,7 +46,7 @@ class AppHTTPException(HTTPException):
         self.lang: localization.Language | str = lang or AppRequest.lang.get()
         self.extra_headers: dict = extra_headers or {}
         self.error_payload: dict = error_payload or {}
-        self.msg_format: Optional[dict] = msg_format
+        self.msg_format: dict = msg_format or {}
         self.msg_override: Optional[str] = msg_override
 
     @property
@@ -68,42 +68,33 @@ class IncorrectCredentials(AppHTTPException):
     error_name = "incorrect_credentials"
     status_code = 401
 
-    def __new__(cls, *args, **kwargs):
-        super().__new__(*args, **kwargs)
-
-        error_add_localization(
-            cls.error_name,
-            ru="Произошла ошибка авторизации, пожалуйста перезайдите в приложение.",
-            en="Authorization error was happened, please re-login into the app."
-        )
+    error_add_localization(
+        error_name,
+        ru="Произошла ошибка авторизации, пожалуйста перезайдите в приложение.",
+        en="Authorization error was happened, please re-login into the app."
+    )
 
 
 class AccessTokenExpired(AppHTTPException):
     error_name = "access_token_expired"
     status_code = 401
 
-    def __new__(cls, *args, **kwargs):
-        super().__new__(*args, **kwargs)
-
-        error_add_localization(
-            cls.error_name,
-            ru="Произошла ошибка авторизации, пожалуйста перезайдите в приложение.",
-            en="Authorization error was happened, please re-login into the app."
-        )
+    error_add_localization(
+        error_name,
+        ru="Произошла ошибка авторизации, пожалуйста перезайдите в приложение.",
+        en="Authorization error was happened, please re-login into the app."
+    )
 
 
 class AccessForbidden(AppHTTPException):
     error_name = "access_forbidden"
     status_code = 403
 
-    def __new__(cls, *args, **kwargs):
-        super().__new__(*args, **kwargs)
-
-        error_add_localization(
-            cls.error_name,
-            ru="Доступ к данному ресурсу запрещен.",
-            en="Access forbidden."
-        )
+    error_add_localization(
+        error_name,
+        ru="Доступ к данному ресурсу запрещен.",
+        en="Access forbidden."
+    )
 
 
 class NotDevelopedError(AppHTTPException):

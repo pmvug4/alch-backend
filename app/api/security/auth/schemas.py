@@ -11,7 +11,7 @@ class LoginRequest(BaseModel):
     platform: AuthSessionPlatformNames
 
     @validator('email', 'password')
-    def _validate_length(self, value: str) -> str:
+    def _validate_length(cls, value: str) -> str:
         if len(value) > 127:
             raise ValueError('Max len is 127')
 
@@ -22,7 +22,7 @@ class StartEmailVerificationRequest(BaseModel):
     email: EmailStr
 
     @validator('email')
-    def _validate_length(self, value: str) -> str:
+    def _validate_length(cls, value: str) -> str:
         if len(value) > 127:
             raise ValueError('Max len is 127')
 

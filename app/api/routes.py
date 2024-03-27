@@ -20,7 +20,16 @@ from fastapi import APIRouter, Depends
 # from api.landings import router as landings_router
 #
 #
-router = APIRouter()
+
+from .security.router import router as security_router
+
+
+
+router = APIRouter(prefix='/api/v1')
+
+router.include_router(security_router, prefix='/security')
+
+
 # router.include_router(intercomrouter, prefix="/api/v1/account", tags=['Account'])
 # router.include_router(authrouter, prefix="/api/v1/auth")
 # router.include_router(userrouter, prefix="/api/v1/users")

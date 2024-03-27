@@ -18,7 +18,7 @@ from .schemas import (
     RegisterAccountRequest
 )
 
-router = APIRouter(tags=["Auth"])
+router = APIRouter()
 
 
 @router.get(

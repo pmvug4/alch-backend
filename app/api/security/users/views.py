@@ -7,7 +7,7 @@ from core.db import get_db
 from logic.security import depends
 from logic.security.users import UserView, User
 
-router = APIRouter(tags=["Users"])
+router = APIRouter()
 
 
 @router.get(

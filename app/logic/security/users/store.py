@@ -36,7 +36,7 @@ class UserStore(ObjectStore):
         sql = f"""
             UPDATE {self._table} SET 
                 email = :email,
-                password_hash = :password_hash
+                password_hash = :password_hash,
                 updated_at = now()
             WHERE id = :pk
             RETURNING *

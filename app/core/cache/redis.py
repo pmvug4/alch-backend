@@ -1,6 +1,7 @@
 import aioredis
 from loguru import logger
 from typing import Optional
+from contextlib import contextmanager
 
 from core.common.singleton import SingletonMeta
 
@@ -39,6 +40,7 @@ class Redis(metaclass=SingletonMeta):
             finally:
                 self._redis = None
 
+    @contextmanager
     def get_connection(self) -> aioredis.Redis:
         if self._redis is None:
             raise RuntimeError("Redis is not configured.")
@@ -47,4 +49,5 @@ class Redis(metaclass=SingletonMeta):
 
 
 def get_redis() -> aioredis.Redis:
-    yield Redis().get_connection()
+    with Redis().get_connection() as conn:  # noqa
+        yield conn

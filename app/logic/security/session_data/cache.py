@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -18,9 +19,10 @@ class SessionDataCache(ObjectCache):
 
     async def set(
             self,
-            data: SessionData
+            data: SessionData,
+            ex: Optional[int | datetime.timedelta] = None
     ) -> None:
-        await self._set(data)
+        await self._set(data, ex=ex)
 
     async def get(self, session_uuid: UUID) -> Optional[SessionData]:
         return await self._get(str(session_uuid))

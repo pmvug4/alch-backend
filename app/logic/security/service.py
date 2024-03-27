@@ -120,7 +120,10 @@ class SecurityService:
             user=user
         )
 
-        await SessionDataCache(redis).set(session_data)
+        await SessionDataCache(redis).set(
+            session_data,
+            ex=auth_settings.AUTH_CACHE_SESSION_ALIVE_SECONDS
+        )
 
         return session_data
 
@@ -215,7 +218,7 @@ class SecurityService:
     @staticmethod
     def _generate_access_token(session_uuid: UUID) -> str:
         return jwt.create_token(
-            {'session_uuid': session_uuid}
+            {'session_uuid': str(session_uuid)}
         )
 
     @staticmethod
@@ -224,4 +227,4 @@ class SecurityService:
 
     @staticmethod
     def _get_password_hash(password: str) -> str:
-        return md5(password + auth_settings.AUTH_PASSWORD_SALT).hexdigest()
+        return md5((password + auth_settings.AUTH_PASSWORD_SALT).encode()).hexdigest()

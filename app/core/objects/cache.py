@@ -1,3 +1,4 @@
+import datetime
 from aioredis import Redis, ResponseError
 from typing import Type, Optional
 
@@ -13,27 +14,29 @@ class ObjectCache:
 
     def _fetch_key(
             self,
-            data: '_model'
+            data: BaseModel
     ) -> str:
         raise NotImplementedError
 
     async def _set(
             self,
-            data: '_model',
-            override_key: str = None
+            data: BaseModel,
+            override_key: str = None,
+            ex: Optional[int | datetime.timedelta] = None
     ) -> None:
-        await self.redis.hset(
+        await self.redis.set(
             f'{self._prefix}__{override_key or self._fetch_key(data)}',
-            mapping=data.dict()
+            value=data.json(),
+            ex=ex
         )
 
     async def _get(
             self,
             key: str
-    ) -> Optional['_model']:
+    ) -> Optional[BaseModel]:
         try:
-            return self._model.parse_obj(
-                await self.redis.hgetall(f'{self._prefix}__{key}')
+            return self._model.parse_raw(
+                await self.redis.get(f'{self._prefix}__{key}')
             )
         except (ResponseError, ValidationError, ValueError):
             return None

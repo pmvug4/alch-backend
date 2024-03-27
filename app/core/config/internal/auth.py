@@ -14,6 +14,7 @@ class AuthSettings(BaseSettings):
     AUTH_OTP_PASSWORD_CHECKS: int = Field(3, env='AUTH_OTP_PASSWORD_CHECKS')
     AUTH_OTP_RETRY_PERIOD_SECONDS: int = Field(300, env='AUTH_OTP_RETRY_PERIOD_SECONDS')
     AUTH_OTP_PASSWORD_LENGTH: int = 6
+    AUTH_CACHE_SESSION_ALIVE_SECONDS: int = 300
 
 
 auth_settings = AuthSettings()

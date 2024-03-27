@@ -2,8 +2,9 @@ import time
 import traceback
 from databases import Database
 from databases.core import Connection
-from loguru import logger
+from contextlib import asynccontextmanager
 
+from core.logs import log
 from core.common.singleton import SingletonMeta
 from core.config.external import db_settings, telegram_settings
 from core.config.internal import run_state_settings
@@ -32,7 +33,7 @@ class DatabaseWithLogging(Database):
                         if exec_time * 1000 > run_state_settings.TELEGRAM_DB_ALARM_EXEC_THRESHOLD_MS:
                             query = args[0]
 
-                            logger.warning(f"[Database] ({func_name}) long query execution: {exec_time:.2f}s {query=}")
+                            log.warning(f"[Database] ({func_name}) long query execution: {exec_time:.2f}s {query=}")
 
                             await BackgroundTasks.create(
                                 send_telegram_message(
@@ -66,7 +67,7 @@ class DBConnPool(metaclass=SingletonMeta):
 
     async def init_db(self):
         try:
-            logger.info(f"[{self.__class__.__name__}] (init_db) init db {self._db_settings.DB}...")
+            log.info(f"[{self.__class__.__name__}] (init_db) init db {self._db_settings.DB}...")
 
             self.db_conn = DatabaseWithLogging(
                 url=self._db_settings.database_url,
@@ -78,12 +79,13 @@ class DBConnPool(metaclass=SingletonMeta):
 
             await self.db_conn.connect()
         except Exception as e:
-            logger.error(
+            log.error(
                 f"[{self.__class__.__name__}] (init_db) database not available! "
                 f"Exception: {repr(e)}, {traceback.format_exc()}"
             )
             raise
 
+    @asynccontextmanager
     async def get_conn(self) -> Connection:
         if self.db_conn is None:
             raise RuntimeError("Database is not configured yet!")
@@ -93,10 +95,10 @@ class DBConnPool(metaclass=SingletonMeta):
 
     async def close_db(self):
         try:
-            logger.info(f"[{self.__class__.__name__}] (close_db) Close pool...")
+            log.info(f"[{self.__class__.__name__}] (close_db) Close pool...")
             await self.db_conn.disconnect()
         except Exception as e:
-            logger.error(
+            log.error(
                 f"[{self.__class__.__name__}] (close_db) "
                 f"Exception: {repr(e)}, {traceback.format_exc()}"
             )
@@ -104,4 +106,5 @@ class DBConnPool(metaclass=SingletonMeta):
 
 
 async def get_db() -> Connection:
-    yield DBConnPool().get_conn()
+    async with DBConnPool().get_conn() as conn:  # noqa
+        yield conn

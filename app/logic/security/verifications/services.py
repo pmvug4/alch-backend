@@ -69,9 +69,11 @@ class EmailVerificationService:
 
             if email_verification.code != code:
                 await store.remove_attempt(email_verification.id)
-                raise IncorrectVerificationCode
+                # raise After transaction commitment
             else:
                 return await store.mark_verified(email_verification.id)
+
+        raise IncorrectVerificationCode
 
     @staticmethod
     async def validate_verified(

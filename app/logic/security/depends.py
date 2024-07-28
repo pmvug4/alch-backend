@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Security, Depends
 
 from databases.core import Connection
-from aioredis import Redis
+from redis.asyncio import Redis
 
 from core.db import get_db
 from core.cache import get_redis

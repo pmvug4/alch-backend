@@ -1,6 +1,6 @@
 from uuid import UUID
 from databases.core import Connection, Database
-from aioredis import Redis
+from redis.asyncio import Redis
 from pydantic import EmailStr
 from hashlib import md5
 

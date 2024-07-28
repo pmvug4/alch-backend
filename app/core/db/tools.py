@@ -76,13 +76,18 @@ async def get(
         returning='*',
         for_update: bool = False,
         return_deleted: bool = False
-) -> Record:
+) -> Record | None:
     sql = (
             f"SELECT {returning} FROM {table} WHERE {pk_field} = :id " +
-            ("AND deleted_at IS NULL" if not return_deleted else "") +
             ("FOR UPDATE" if for_update else "")
     )
-    return await db.fetch_one(sql, {'id': pk_value})
+
+    record = await db.fetch_one(sql, {'id': pk_value})
+    if record is not None:
+        if (not return_deleted) and (record._mapping.get('deleted_at', None) is not None):
+            return None
+
+    return record
 
 
 async def get_for_list(

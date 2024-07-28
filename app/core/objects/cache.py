@@ -1,5 +1,5 @@
 import datetime
-from aioredis import Redis, ResponseError
+from redis.asyncio import Redis, ResponseError
 from typing import Type, Optional
 
 from pydantic import BaseModel, ValidationError

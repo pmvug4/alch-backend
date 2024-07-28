@@ -1,10 +1,10 @@
-import aioredis
 from loguru import logger
 from typing import Optional
+from redis import asyncio as aioredis
+
 from contextlib import contextmanager
 
 from core.common.singleton import SingletonMeta
-
 from core.config.external import redis_settings
 
 

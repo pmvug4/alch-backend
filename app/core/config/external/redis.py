@@ -1,10 +1,13 @@
-from pydantic import BaseSettings, SecretStr, Field
+from pydantic import SecretStr, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class RedisSettings(BaseSettings):
-    HOST: str = Field(..., env='REDIS_HOST')
-    PASSWORD: SecretStr = Field(..., env='REDIS_PASSWORD')
-    PORT: int = Field(6379, env='REDIS_PORT')
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
+
+    HOST: str = Field(..., validation_alias='REDIS_HOST')
+    PASSWORD: SecretStr = Field(..., validation_alias='REDIS_PASSWORD')
+    PORT: int = Field(6379, validation_alias='REDIS_PORT')
 
 
 redis_settings = RedisSettings()

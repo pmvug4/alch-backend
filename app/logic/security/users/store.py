@@ -2,30 +2,27 @@ from typing import Optional
 from uuid import UUID
 
 from core.db.tables import DBTables
-
 from core.objects.store import ObjectStore
 
 from .models import User, PresignUserForm
 from .errors import UserNotFoundError
 
 
-class UserStore(ObjectStore):
+class UserStore(
+    ObjectStore[
+        User,
+        PresignUserForm,
+        None,
+        UserNotFoundError,
+    ]
+):
     _table = DBTables.users
+
     _model = User
+    _model_create_form = PresignUserForm
+    _model_update_form = None
+
     _not_found = UserNotFoundError
-
-    async def create_presign(
-            self,
-            form: PresignUserForm
-    ) -> User:
-        sql = f"""
-            INSERT INTO {self._table} (group_id) VALUES (:group_id) RETURNING *;
-        """
-
-        return self._parse(
-            await self.conn.fetch_one(sql, form.dict()),
-            return_none=False
-        )
 
     async def register(
             self,
@@ -57,31 +54,36 @@ class UserStore(ObjectStore):
             pk: int = None,
             uuid: UUID = None,
             email: str = None,
-            only_not_deleted: bool = None,
-            return_none: bool = False
+            for_update: bool = False,
+            return_none: bool = False,
+            return_deleted: bool = False
     ) -> Optional[User]:
-        values = {}
-        sql = f"SELECT * FROM {self._table} WHERE "
-
         if pk is not None:
-            sql += " id = :pk "
-            values['pk'] = pk
+            return await super().get(
+                pk_value=pk,
+                pk_field='id',
+                for_update=for_update,
+                return_none=return_none,
+                return_deleted=return_deleted
+            )
         elif uuid is not None:
-            sql += " uuid = :uuid "
-            values['uuid'] = uuid
+            return await super().get(
+                pk_value=uuid,
+                pk_field='uuid',
+                for_update=for_update,
+                return_none=return_none,
+                return_deleted=return_deleted
+            )
         elif email is not None:
-            sql += " email = :email "
-            values['email'] = email
+            return await super().get(
+                pk_value=email,
+                pk_field='email',
+                for_update=for_update,
+                return_none=return_none,
+                return_deleted=return_deleted
+            )
         else:
             raise TypeError
-
-        if only_not_deleted:
-            sql += " AND deleted_at IS NULL "
-
-        return self._parse(
-            await self.conn.fetch_one(sql, values),
-            return_none=return_none
-        )
 
     async def get_for_login(
             self,

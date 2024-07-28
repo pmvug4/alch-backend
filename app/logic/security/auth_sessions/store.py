@@ -8,48 +8,48 @@ from .models import AuthSessionForm, AuthSession
 from .errors import AuthSessionNotFoundError
 
 
-class AuthSessionStore(ObjectStore):
+class AuthSessionStore(
+    ObjectStore[
+        AuthSession,
+        AuthSessionForm,
+        None,
+        AuthSessionNotFoundError,
+    ]
+):
     _table = DBTables.auth_sessions
+
     _model = AuthSession
+    _model_create_form = AuthSessionForm
+    _model_update_form = None
+
     _not_found = AuthSessionNotFoundError
-
-    async def create(
-            self,
-            form: AuthSessionForm
-    ) -> AuthSession:
-        sql = f"""
-            INSERT INTO {self._table} (user_id, platform, presign) VALUES (:user_id, :platform, :presign) RETURNING *;
-        """
-
-        return self._parse(
-            await self.conn.fetch_one(sql, form.dict()),
-            return_none=False
-        )
 
     async def get(
             self,
             pk: int = None,
             uuid: UUID = None,
             for_update: bool = False,
-            return_none: bool = False
+            return_none: bool = False,
+            return_deleted: bool = False
     ) -> Optional[AuthSession]:
-        values = {}
-
         if pk is not None:
-            condition = ' id = :pk '
-            values['pk'] = pk
+            return await super().get(
+                pk_value=pk,
+                pk_field='id',
+                for_update=for_update,
+                return_none=return_none,
+                return_deleted=return_deleted
+            )
         elif uuid is not None:
-            condition = ' uuid = :uuid '
-            values['uuid'] = uuid
+            return await super().get(
+                pk_value=uuid,
+                pk_field='uuid',
+                for_update=for_update,
+                return_none=return_none,
+                return_deleted=return_deleted
+            )
         else:
             raise TypeError
-
-        sql = f"SELECT * FROM {self._table} WHERE {condition} {'FOR UPDATE' if for_update else ''}"
-
-        return self._parse(
-            await self.conn.fetch_one(sql, values),
-            return_none=return_none
-        )
 
     async def refresh_token(
             self,

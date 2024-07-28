@@ -22,7 +22,7 @@ class SecurityService:
             platform: AuthSessionPlatformNames
     ) -> AuthResponse:
         async with conn.transaction():
-            user = await UserStore(conn).create_presign(
+            user = await UserStore(conn).create(
                 PresignUserForm(group_id=PlayerGroup.id)
             )
 
@@ -174,7 +174,7 @@ class SecurityService:
 
         if await UserStore(conn).get(
             email=email_verification.email,
-            only_not_deleted=True,
+            return_deleted=False,
             return_none=True
         ):
             raise UserAlreadyExists

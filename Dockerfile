@@ -1,4 +1,4 @@
-FROM python:3.10.5 AS python
+FROM python:3.12 AS python
 WORKDIR /app
 
 COPY ./requirements.txt /requirements.txt
@@ -10,7 +10,7 @@ RUN chmod +x ./entrypoint.sh
 CMD ["./entrypoint.sh"]
 
 
-FROM python:3.10.5 AS migration
+FROM python:3.12 AS migration
 
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir --upgrade yoyo-migrations==7.3.2

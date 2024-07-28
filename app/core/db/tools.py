@@ -3,14 +3,12 @@ from typing import List
 
 import databases.backends.postgres
 from asyncpg import Record, Range
-from databases import Database
+from databases.core import Database, Connection
 from pydantic import BaseModel
-
-from core.db.tables import DBTables
 
 
 async def create(
-        db: Database,
+        db: Database | Connection,
         table: str,
         form: BaseModel,
         exclude: set = None,
@@ -18,7 +16,7 @@ async def create(
         exclude_unset: bool = True,
         extra_data: dict = None
 ) -> Record:
-    data: dict = form.dict(
+    data: dict = form.model_dump(
         exclude=exclude,
         exclude_none=exclude_none,
         exclude_unset=exclude_unset
@@ -37,7 +35,7 @@ async def create(
 
 
 async def create_many(
-        db: Database,
+        db: Database | Connection,
         table: str,
         forms: list[BaseModel] | tuple[BaseModel],
         exclude: set = None,
@@ -49,7 +47,7 @@ async def create_many(
         return []
 
     datas = [
-        form.dict(
+        form.model_dump(
             exclude=exclude,
             exclude_none=exclude_none,
             exclude_unset=exclude_unset
@@ -71,19 +69,24 @@ async def create_many(
 
 
 async def get(
-        db: Database,
+        db: Database | Connection,
         table: str,
         pk_value,
         pk_field: str = 'id',
         returning='*',
-        for_update: bool = False
+        for_update: bool = False,
+        return_deleted: bool = False
 ) -> Record:
-    sql = f"SELECT {returning} FROM {table} WHERE {pk_field} = :id " + ("FOR UPDATE" if for_update else "")
+    sql = (
+            f"SELECT {returning} FROM {table} WHERE {pk_field} = :id " +
+            ("AND deleted_at IS NULL" if not return_deleted else "") +
+            ("FOR UPDATE" if for_update else "")
+    )
     return await db.fetch_one(sql, {'id': pk_value})
 
 
 async def get_for_list(
-        db: Database,
+        db: Database | Connection,
         table: str,
         filters: str,
         ending: str,
@@ -94,28 +97,32 @@ async def get_for_list(
     return await db.fetch_all(sql, data)
 
 
-async def unlink_used_coupon(db: Database, order_id: int, employee_coupon_id: int):
-    sql = (f"UPDATE {DBTables.order} set employee_coupon_id = null, coupon_code = null"
-           f" where employee_coupon_id = :employee_coupon_id AND id != :order_id")
-
-    return await db.fetch_one(sql, {'order_id': order_id, 'employee_coupon_id': employee_coupon_id})
-
-
 async def update_by_id(
-        db: Database,
+        db: Database | Connection,
         table: str,
-        pk: int | str,
         data: dict,
-        with_atime: bool = True,
-        id_field: str = 'id',
+        pk_value: int | str,
+        pk_field: str = 'id',
+        with_updated_at: bool = True,
         returning: str = '*'
 ) -> Record:
-    atime_string = ", atime = now() " if with_atime else " "
+    atime_string = ", updated_at = now() " if with_updated_at else " "
     holders = gen_update_holders(data)
 
-    sql = f"UPDATE {table} SET {holders}{atime_string} WHERE {id_field} = :pk RETURNING {returning}"
+    sql = f"UPDATE {table} SET {holders}{atime_string} WHERE {pk_field} = :pk RETURNING {returning}"
 
-    return await db.fetch_one(sql, data | {'pk': pk})
+    return await db.fetch_one(sql, data | {'pk': pk_value})
+
+
+async def delete_by_id(
+        db: Database | Connection,
+        table: str,
+        pk_value: int | str,
+        pk_field: str = 'id',
+        returning: str = '*'
+) -> Record:
+    sql = f"UPDATE {table} SET deleted_at = now() WHERE {pk_field} = :pk RETURNING {returning}"
+    return await db.fetch_one(sql, {'pk': pk_value})
 
 
 def gen_key_holders(data: dict, with_brackets: bool = True) -> str:

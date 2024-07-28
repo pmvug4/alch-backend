@@ -1,8 +1,6 @@
 from fastapi import Depends, APIRouter
-from databases.core import Connection
 
 from core.schemas import get_response_models, prepare_response_scheme
-from core.db import get_db
 
 from logic.security import depends
 from logic.security.users import UserView, User

@@ -1,4 +1,0 @@
-
-
-class PreferenceDoesNotExist(Exception):
-    pass

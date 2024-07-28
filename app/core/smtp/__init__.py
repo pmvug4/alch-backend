@@ -1,6 +1,8 @@
+import aiosmtplib
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import aiosmtplib
+
 from core.config.smtp import smtp_settings
 from core.config.telegram import telegram_settings
 from core.smtp.exceptions import UnexpectedSmtpExtension

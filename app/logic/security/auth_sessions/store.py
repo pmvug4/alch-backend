@@ -13,6 +13,7 @@ class AuthSessionStore(
         AuthSession,
         AuthSessionForm,
         None,
+        None,
         AuthSessionNotFoundError,
     ]
 ):
@@ -20,7 +21,8 @@ class AuthSessionStore(
 
     _model = AuthSession
     _model_create_form = AuthSessionForm
-    _model_update_form = None
+    _model_put_form = None
+    _model_patch_form = None
 
     _not_found = AuthSessionNotFoundError
 

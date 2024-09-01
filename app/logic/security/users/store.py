@@ -13,6 +13,7 @@ class UserStore(
         User,
         PresignUserForm,
         None,
+        None,
         UserNotFoundError,
     ]
 ):
@@ -20,7 +21,8 @@ class UserStore(
 
     _model = User
     _model_create_form = PresignUserForm
-    _model_update_form = None
+    _model_put_form = None
+    _model_patch_form = None
 
     _not_found = UserNotFoundError
 

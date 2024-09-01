@@ -1,8 +1,9 @@
 import json
-from typing import List
+from typing import Optional
+from uuid import UUID
 
 import databases.backends.postgres
-from asyncpg import Record, Range
+from asyncpg import Record
 from databases.core import Database, Connection
 from pydantic import BaseModel
 
@@ -73,7 +74,7 @@ async def get(
         table: str,
         pk_value,
         pk_field: str = 'id',
-        returning='*',
+        returning: str = '*',
         for_update: bool = False,
         return_deleted: bool = False
 ) -> Record | None:
@@ -90,16 +91,83 @@ async def get(
     return record
 
 
-async def get_for_list(
+class FetchRelated:
+    def __init__(
+            self,
+            table: str,
+            join_on: str,
+            join_to: str,
+            returning_as: Optional[str] = None,
+            inner_join: bool = True
+    ):
+        self.table = table
+        self.join_on = join_on
+        self.join_to = join_to
+        self.returning_as = returning_as or table
+        self.inner_join = inner_join
+
+
+async def get_list(
         db: Database | Connection,
         table: str,
-        filters: str,
-        ending: str,
-        data: dict,
-        returning="*, count(*) over () as _total_count ",
-) -> List[Record]:
-    sql = f"SELECT {returning} FROM {table} WHERE {filters} {ending}"
-    return await db.fetch_all(sql, data)
+        pk_value: Optional[
+            int | str | UUID |
+            list[int] |
+            list[str] |
+            list[UUID]
+        ] = None,
+        pk_field: Optional[str] = 'id',
+        returning: str = '*',
+        extra_filter: Optional[str] = None,
+        fetch_related: list[FetchRelated] = None,
+        order_by: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
+) -> list[Record]:
+    values = {}
+    fetch_related = fetch_related or []
+
+    _related_selection = [returning]
+    _related_join = []
+    for x in fetch_related:
+        if x.inner_join:
+            j = ' INNER JOIN '
+        else:
+            j = ' LEFT JOIN '
+
+        j = f' {j} {x.table} ON {x.join_on} = {x.join_to} '
+        s = f" to_json({x.table}.*) AS {x.returning_as} "
+
+        _related_join.append(j)
+        _related_selection.append(s)
+
+    sql = f"""
+        SELECT
+            COUNT(*) OVER () AS _total_items,
+            {returning} {',' + ','.join(_related_selection) if len(_related_selection) else ''} 
+        FROM 
+            {table} {' '.join(_related_join)} 
+        WHERE TRUE 
+            {f'AND {pk_field} = ANY(:pk_value)' if pk_field is not None else ''}
+            {f'AND {extra_filter}' if extra_filter else ''}
+        {f'ORDER BY {order_by}' if order_by is not None else ''}
+    """
+
+    if limit:
+        sql += f" LIMIT :limit "
+        values |= {'limit': limit}
+    if offset:
+        sql += f" OFFSET :offset "
+        values |= {'offset': offset}
+
+    if pk_field:
+        if isinstance(pk_value, list):
+            values['pk_value'] = pk_value
+        else:
+            values['pk_value'] = [pk_value]
+
+    records = await db.fetch_all(sql, values)
+    return records
 
 
 async def update_by_id(
@@ -148,15 +216,6 @@ def gen_update_holders(data: dict) -> str:
     return ','.join([f"{k} = :{k}" for k in data.keys()])
 
 
-def gen_where_holders(data: dict) -> str:
-    return ' AND '.join(f" {k} = :{k} " for k in data.keys())
-
-
-def create_limit_offset_clause(page_size: int, page_number: int):
-    limit, offset = calc_limit_offset(page_size, page_number)
-    return " LIMIT :limit OFFSET :offset ", {"limit": limit, "offset": offset}
-
-
 class Filters:
     def __init__(self):
         self._filters = []
@@ -198,40 +257,6 @@ def to_int_list_for_in(array: list[int]) -> str:
     return "(" + s + ")"
 
 
-def to_str_list_for_in(array: list[str]) -> str:
-    s = ','.join(map(lambda x: f"'{x}'", array))
-    return "(" + s + ")"
-
-
-def to_int_list_for_insert(array: list[int]) -> str:
-    s = ','.join(map(lambda x: f"\"{x}\"", array))
-    return "'{" + s + "}'"
-
-
-def calc_limit_offset(page_size: int, page_number: int) -> (int, int):
-    offset = page_size * (page_number - 1)
-    limit = page_size
-
-    return limit, offset
-
-
-def calc_total_pages(count: int, page_size: int) -> int:
-    return (count + page_size - 1) // page_size
-
-
-def parse_json_range(v: str | Range) -> Range:
-    if isinstance(v, str):
-        low, high = map(
-            lambda x: x.strip().strip('"').replace(' ', 'T'),
-            v.strip('[').strip(']').strip('(').strip(')').split(',')
-        )
-        return Range(lower=low, upper=high)
-    elif isinstance(v, Range):
-        return v
-    else:
-        raise RuntimeError
-
-
 def get_data(record: Record | str | dict | None) -> dict | None:
     if isinstance(record, Record) or isinstance(record, databases.backends.postgres.Record):
         data = dict(record._mapping)
@@ -245,10 +270,3 @@ def get_data(record: Record | str | dict | None) -> dict | None:
         raise RuntimeError
 
     return data
-
-
-def for_update(v: bool) -> str:
-    if v:
-        return " FOR UPDATE "
-    else:
-        return " "

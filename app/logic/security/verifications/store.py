@@ -13,6 +13,7 @@ class EmailVerificationStore(ObjectStore[
         EmailVerification,
         EmailVerificationForm,
         None,
+        None,
         EmailVerificationNotFound,
     ]
 ):
@@ -20,7 +21,8 @@ class EmailVerificationStore(ObjectStore[
 
     _model = EmailVerification
     _model_create_form = EmailVerificationForm
-    _model_update_form = None
+    _model_put_form = None
+    _model_patch_form = None
 
     _not_found = EmailVerificationNotFound
 

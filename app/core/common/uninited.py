@@ -1,0 +1,4 @@
+
+
+class Uninited:
+    pass

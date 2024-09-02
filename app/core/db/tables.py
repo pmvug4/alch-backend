@@ -13,6 +13,8 @@ class DBTables:
 
     player = 'player'
     player_info = 'player_info'
+    player_balance = 'player_balance'
+    player_subscription = 'player_subscription'
 
 
 class DBIndexes:

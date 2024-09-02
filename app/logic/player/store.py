@@ -33,6 +33,20 @@ class PlayerFullStore(
             join_to=f'{DBTables.media}.uuid',
             inner_join=False,
             returning_as='player_info_avatar'
+        ),
+        FetchRelated(
+            table=DBTables.player_balance,
+            join_on=f'{DBTables.player_balance}.player_id',
+            join_to=f'{_table}.id',
+            inner_join=True,
+            returning_as='player_balance'
+        ),
+        FetchRelated(
+            table=DBTables.player_subscription,
+            join_on=f'{DBTables.player_subscription}.player_id',
+            join_to=f'{_table}.id',
+            inner_join=True,
+            returning_as='player_subscription'
         )
     ]
 

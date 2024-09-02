@@ -27,7 +27,7 @@ steps = [
                 updated_at TIMESTAMP,
                 deleted_at TIMESTAMP
             );
-            
+            CREATE UNIQUE INDEX ui_users ON users(email, deleted_at);
             
             CREATE TABLE email_verifications(
                 id SERIAL PRIMARY KEY,

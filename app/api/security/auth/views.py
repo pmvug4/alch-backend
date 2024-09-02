@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/token/presign",
+    "/token/presign/",
     description="Get presign token",
     response_model=AuthResponse,
     responses=get_response_models(
@@ -43,7 +43,7 @@ async def get_presign_token(
 
 
 @router.post(
-    "/token/refresh",
+    "/token/refresh/",
     description="Refresh token",
     response_model=AuthResponse,
     responses=get_response_models(
@@ -66,7 +66,7 @@ async def refresh_token(
 
 
 @router.post(
-    "/login",
+    "/login/",
     description="Login by password",
     response_model=AuthResponse,
     responses=get_response_models(
@@ -90,7 +90,7 @@ async def login_by_password(
 
 
 @router.post(
-    "/verification/email/start",
+    "/verification/email/start/",
     description="Start email verification",
     response_model=EmailVerificationResponse,
     responses=get_response_models(
@@ -111,7 +111,7 @@ async def start_email_verification(
 
 
 @router.post(
-    "/verification/email/complete",
+    "/verification/email/complete/",
     description="Complete email verification",
     response_model=EmailVerificationResponse,
     responses=get_response_models(
@@ -133,7 +133,7 @@ async def complete_email_verification(
 
 
 @router.post(
-    "/register",
+    "/register/",
     description="Register account",
     response_model=AuthResponse,
     responses=get_response_models(

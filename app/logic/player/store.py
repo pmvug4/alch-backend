@@ -65,6 +65,7 @@ class PlayerFullStore(
 
     async def get(
             self,
+            user_id: Optional[int] = None,
             player_id: Optional[int] = None,
             player_uuid: Optional[UUID] = None,
             return_deleted: bool = False,
@@ -79,6 +80,11 @@ class PlayerFullStore(
             v = {
                 'pk_field': f'{self._table}.uuid',
                 'pk_value': player_uuid
+            }
+        elif user_id is not None:
+            v = {
+                'pk_field': f'{self._table}.user_id',
+                'pk_value': user_id
             }
         else:
             raise TypeError

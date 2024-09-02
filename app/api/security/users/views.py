@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/me",
+    "/me/",
     description="Get my user",
     response_model=UserView,
     responses=get_response_models(

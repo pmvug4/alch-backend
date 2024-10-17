@@ -15,10 +15,7 @@ class GetCurrentPlayer:
             conn: Connection = Depends(get_db),
             user: User = Depends(GetCurrentUser(optional=False))
     ) -> Player:
-        return await PlayerStore(conn).get(
-            pk_value=user.id,
-            pk_field='user_id'
-        )
+        return await PlayerStore(conn).get(user_id=user.id)
 
 
 class GetCurrentPlayerFull:

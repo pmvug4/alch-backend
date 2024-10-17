@@ -28,7 +28,7 @@ steps = [
                 created_at TIMESTAMP NOT NULL DEFAULT now(),
                 deleted_at TIMESTAMP
             );
-            CREATE UNIQUE INDEX ui_media(internal_path, public_url, deleted_at);
+            CREATE UNIQUE INDEX ui_media ON media(internal_path, public_url, deleted_at);
         """,
         """
             DROP TABLE media;
@@ -45,7 +45,7 @@ steps = [
                 created_at TIMESTAMP NOT NULL DEFAULT now(),
                 deleted_at TIMESTAMP
             );
-            CREATE UNIQUE INDEX ui_player(user_id, deleted_at);
+            CREATE UNIQUE INDEX ui_player ON player(user_id, deleted_at);
             
             CREATE TABLE player_info(
                 id SERIAL PRIMARY KEY,
@@ -62,8 +62,8 @@ steps = [
                 id SERIAL PRIMARY KEY,
                 player_id INT UNIQUE NOT NULL REFERENCES player(id),
                 
-                potions MEDIUMINT NOT NULL,
-                stones MEDIUMINT NOT NULL,
+                potions INT NOT NULL,
+                stones INT NOT NULL,
                 
                 created_at TIMESTAMP NOT NULL DEFAULT now(),
                 updated_at TIMESTAMP
@@ -84,8 +84,8 @@ steps = [
                 player_id INT NOT NULL REFERENCES player(id),
                 
                 reason player_balance_transaction_reason NOT NULL,
-                stones_delta MEDIUMINT NOT NULL DEFAULT 0,
-                potions_delta MEDIUMINT NOT NULL DEFAULT 0,
+                stones_delta SMALLINT NOT NULL DEFAULT 0,
+                potions_delta SMALLINT NOT NULL DEFAULT 0,
                 
                 created_at TIMESTAMP NOT NULL DEFAULT NOW()
             );

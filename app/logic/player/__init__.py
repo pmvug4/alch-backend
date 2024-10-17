@@ -32,4 +32,4 @@ from .player_subscription import (
 )
 from .models import PlayerFull, PlayerInfoFull
 from .store import PlayerFullStore
-from .depends import GetCurrentPlayer, GetCurrentPlayerFull
+from .services import PlayerService

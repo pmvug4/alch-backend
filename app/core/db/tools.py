@@ -1,6 +1,7 @@
 import json
 from typing import Optional
 from uuid import UUID
+from loguru import logger as log
 
 import databases.backends.postgres
 from asyncpg import Record
@@ -127,7 +128,7 @@ async def get_list(
     values = {}
     fetch_related = fetch_related or []
 
-    _related_selection = [returning]
+    _related_selection = []
     _related_join = []
     for x in fetch_related:
         if x.inner_join:
@@ -144,7 +145,7 @@ async def get_list(
     sql = f"""
         SELECT
             COUNT(*) OVER () AS _total_items,
-            {returning} {',' + ','.join(_related_selection) if len(_related_selection) else ''} 
+            {table}.{returning} {',' + ','.join(_related_selection) if len(_related_selection) else ''} 
         FROM 
             {table} {' '.join(_related_join)} 
         WHERE TRUE 
@@ -165,6 +166,8 @@ async def get_list(
             values['pk_value'] = pk_value
         else:
             values['pk_value'] = [pk_value]
+
+    log.debug(f"Build SQL {sql} {values=}")
 
     records = await db.fetch_all(sql, values)
     return records
@@ -257,7 +260,10 @@ def to_int_list_for_in(array: list[int]) -> str:
     return "(" + s + ")"
 
 
-def get_data(record: Record | str | dict | None) -> dict | None:
+def get_data(
+        record: Record | str | dict | None,
+        recursive_fields: set[str] = None
+) -> dict | None:
     if isinstance(record, Record) or isinstance(record, databases.backends.postgres.Record):
         data = dict(record._mapping)
     elif isinstance(record, dict):
@@ -268,5 +274,9 @@ def get_data(record: Record | str | dict | None) -> dict | None:
         data = None
     else:
         raise RuntimeError
+
+    if recursive_fields:
+        for k in recursive_fields.intersection(set(data.keys())):
+            data[k] = get_data(data[k])
 
     return data

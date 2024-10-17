@@ -17,5 +17,5 @@ class SessionData(BaseModel):
 
     platform: AuthSessionPlatformNames
 
-    # player_id: Optional[int]
-    # player_uuid: Optional[UUID]
+    player_id: Optional[int]
+    player_uuid: Optional[UUID]

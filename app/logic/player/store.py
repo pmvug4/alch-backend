@@ -58,8 +58,8 @@ class PlayerFullStore(
             cls,
             record: Record
     ) -> PlayerFull:
-        data: dict = db_tools.get_data(record)
-        data['player_info']['avatar'] = data['player_info_avatar']
+        data: dict = cls._record_to_data(record)
+        data['player_info']['avatar'] = data.pop('player_info_avatar')
 
         return cls._model.model_validate(data)
 

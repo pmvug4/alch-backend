@@ -42,17 +42,19 @@ services:
         networks:
             - default
 
-    pgweb:
-        image: sosedoff/pgweb
-        container_name: alch_pgweb
+    pgAdmin:
+        restart: always
+        image: hub.xdev.team/dpage/pgadmin4:6.15
+        container_name: alch_pgadmin
         links:
             - postgres:postgres
+        ports:
+            - "127.0.0.1:${PGADMIN_PORT}:80"
         environment:
-            - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
         depends_on:
             - postgres
-        ports:
-            - "127.0.0.1:${PGWEB_SERVICE_PORT}:8081"
         networks:
             - default
 

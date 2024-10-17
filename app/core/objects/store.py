@@ -147,7 +147,20 @@ class ObjectFullStore[
             cls,
             record: Record
     ) -> Model:
-        return cls._model.model_validate(db_tools.get_data(record))
+        return cls._model.model_validate(cls._record_to_data(record))
+
+    @classmethod
+    def _record_to_data(
+            cls,
+            record: Record
+    ) -> dict:
+        return db_tools.get_data(
+            record,
+            recursive_fields={
+                x.returning_as
+                for x in cls._fetch_related
+            }
+        )
 
     @classmethod
     def _parse(

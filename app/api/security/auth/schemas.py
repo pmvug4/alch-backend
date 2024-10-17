@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator, constr
+from pydantic import BaseModel, EmailStr, field_validator, constr
 from uuid import UUID
 
 from logic.security.auth_sessions import AuthSessionPlatformNames
@@ -10,7 +10,8 @@ class LoginRequest(BaseModel):
     group_id: int = 1
     platform: AuthSessionPlatformNames
 
-    @validator('email', 'password')
+    @field_validator('email', 'password')
+    @classmethod
     def _validate_length(cls, value: str) -> str:
         if len(value) > 127:
             raise ValueError('Max len is 127')
@@ -21,7 +22,8 @@ class LoginRequest(BaseModel):
 class StartEmailVerificationRequest(BaseModel):
     email: EmailStr
 
-    @validator('email')
+    @field_validator('email')
+    @classmethod
     def _validate_length(cls, value: str) -> str:
         if len(value) > 127:
             raise ValueError('Max len is 127')

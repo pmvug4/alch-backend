@@ -3,9 +3,13 @@ from databases.core import Connection, Database
 from redis.asyncio import Redis
 from pydantic import EmailStr
 from hashlib import md5
+from typing import Optional
 
 from core.common import jwt
 from core.config.internal import auth_settings
+
+from logic.player.player import Player, PlayerStore
+from logic.player.services import PlayerService
 
 from .groups import PlayerGroup
 from .users import UserStore, PresignUserForm, User, UserAlreadyExists
@@ -24,6 +28,11 @@ class SecurityService:
         async with conn.transaction():
             user = await UserStore(conn).create(
                 PresignUserForm(group_id=PlayerGroup.id)
+            )
+
+            await PlayerService.init_player(
+                conn=conn,
+                user_id=user.id
             )
 
             auth_session = await AuthSessionStore(conn).create(
@@ -114,10 +123,12 @@ class SecurityService:
     ) -> SessionData:
         auth_session = await AuthSessionStore(conn).get(uuid=session_uuid)
         user = await UserStore(conn).get(pk=auth_session.user_id)
+        player = await PlayerStore(conn).get(user_id=user.id, return_none=True)
 
         session_data = SecurityService._build_session_data(
             auth_session=auth_session,
-            user=user
+            user=user,
+            player=player
         )
 
         await SessionDataCache(redis).set(
@@ -203,7 +214,8 @@ class SecurityService:
     @staticmethod
     def _build_session_data(
             auth_session: AuthSession,
-            user: User
+            user: User,
+            player: Optional[Player]
     ) -> SessionData:
         return SessionData(
             session_id=auth_session.id,
@@ -212,7 +224,10 @@ class SecurityService:
             user_id=user.id,
             user_uuid=user.uuid,
             user_group_id=user.group_id,
-            platform=auth_session.platform
+            platform=auth_session.platform,
+
+            player_id=player.id if player is not None else None,
+            player_uuid=player.uuid if player is not None else None
         )
 
     @staticmethod
